@@ -3,9 +3,14 @@ import sys
 import pandas as pd
 import configparser
 import os
+import configparser # Ensure configparser is imported if not already
 
 # --- Configuration ---
-CONFIG_FILE = 'db_config.ini'
+# Construct path relative to the script's location
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up one level to the root directory and join with the config file name
+config_path = os.path.normpath(os.path.join(script_dir, '..', 'db_config.ini'))
+CONFIG_FILE = config_path
 
 connection = None
 cursor = None

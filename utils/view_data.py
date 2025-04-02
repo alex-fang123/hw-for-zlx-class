@@ -1,13 +1,18 @@
 import pandas as pd
 import os
 
-# Define file paths for RAW data
-output_dir = "./data" # Assuming files are directly in data now
-index_file = os.path.join(output_dir, "raw_csi300_index_prices.parquet")
-membership_file = os.path.join(output_dir, "raw_csi300_constituent_membership.parquet")
-constituent_prices_file = os.path.join(output_dir, "raw_csi300_constituent_prices.parquet") 
-constituent_weights_file = os.path.join(output_dir, "raw_csi300_constituent_weights.parquet") 
-constituent_financials_file = os.path.join(output_dir, "raw_csi300_constituent_financials.parquet")
+# --- Configuration ---
+# Construct path relative to the script's location
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up one level to the root directory and then into the 'data' directory
+data_dir = os.path.normpath(os.path.join(script_dir, '..', 'data'))
+
+# Define file paths for RAW data using the calculated data_dir
+index_file = os.path.join(data_dir, "raw_csi300_index_prices.parquet")
+membership_file = os.path.join(data_dir, "raw_csi300_constituent_membership.parquet")
+constituent_prices_file = os.path.join(data_dir, "raw_csi300_constituent_prices.parquet") 
+constituent_weights_file = os.path.join(data_dir, "raw_csi300_constituent_weights.parquet") 
+constituent_financials_file = os.path.join(data_dir, "raw_csi300_constituent_financials.parquet")
 
 def view_parquet(file_path, file_description):
     """Helper function to read and display info for a Parquet file."""
