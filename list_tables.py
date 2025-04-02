@@ -2,39 +2,56 @@ import oracledb
 import getpass
 import sys
 import pandas as pd
+import configparser
+import os
 
 # --- Configuration ---
-# DB_USER = "" # Use input prompt for username
-DB_HOST = "219.223.208.52"
-DB_PORT = 1521
-DB_SERVICE_NAME = "ORCL"
-# Use the Instant Client path confirmed earlier
-INSTANT_CLIENT_DIR = r"D:\instantclient-basic-windows.x64-23.7.0.25.01\instantclient_23_7"
+CONFIG_FILE = 'db_config.ini'
 
 connection = None
 cursor = None
 
 try:
-    db_user = input("请输入 Oracle 数据库用户名: ") # Prompt for username
-    print("请输入 Oracle 数据库密码:")
-    db_password = getpass.getpass() # Securely get password
+    # Read configuration from file
+    if not os.path.exists(CONFIG_FILE):
+        print(f"错误: 配置文件 '{CONFIG_FILE}' 不存在。请先创建并配置该文件。")
+        sys.exit(1)
 
-    dsn = f"{DB_HOST}:{DB_PORT}/{DB_SERVICE_NAME}"
-    print(f"正在连接到数据库: {dsn} 用户: {db_user}...")
+    config = configparser.ConfigParser()
+    # Specify encoding as utf-8 to handle potential BOM or special characters
+    config.read(CONFIG_FILE, encoding='utf-8') 
 
     try:
-        print(f"尝试使用指定的 Instant Client 目录初始化 Thick Mode: {INSTANT_CLIENT_DIR}")
-        oracledb.init_oracle_client(lib_dir=INSTANT_CLIENT_DIR)
-        connection = oracledb.connect(user=db_user, password=db_password, dsn=dsn) # Use db_user here
+        db_user = config.get('database', 'user')
+        db_password = config.get('database', 'password')
+        db_host = config.get('database', 'host')
+        db_port = config.get('database', 'port')
+        db_service_name = config.get('database', 'service_name')
+        instant_client_dir = config.get('database', 'instant_client_dir')
+    except (configparser.NoSectionError, configparser.NoOptionError) as e:
+        print(f"错误: 配置文件 '{CONFIG_FILE}' 格式不正确或缺少必要的键: {e}")
+        sys.exit(1)
+
+    if not db_user or db_user == 'YOUR_USERNAME_HERE' or not db_password or db_password == 'YOUR_PASSWORD_HERE':
+        print(f"错误: 请在 '{CONFIG_FILE}' 中配置有效的数据库用户名和密码。")
+        sys.exit(1)
+
+    dsn = f"{db_host}:{db_port}/{db_service_name}"
+    print(f"正在从 '{CONFIG_FILE}' 读取配置并连接到数据库: {dsn} 用户: {db_user}...")
+
+    try:
+        print(f"尝试使用指定的 Instant Client 目录初始化 Thick Mode: {instant_client_dir}")
+        oracledb.init_oracle_client(lib_dir=instant_client_dir)
+        connection = oracledb.connect(user=db_user, password=db_password, dsn=dsn)
         print("数据库连接成功 (Thick Mode)！")
     except Exception as thick_error:
         print(f"Thick mode connection failed: {thick_error}")
         # Add checks for common connection issues like wrong path, architecture mismatch etc.
         print("\n请确保:")
-        print(f"1. Instant Client 路径 '{INSTANT_CLIENT_DIR}' 正确且包含所需的库文件。")
+        print(f"1. Instant Client 路径 '{instant_client_dir}' 正确且包含所需的库文件。")
         print("2. Instant Client 版本与您的 Python/操作系统架构 (64位) 匹配。")
         print("3. 您已重启 VS Code 或终端以使环境变量生效（如果通过 PATH 设置）。")
-        sys.exit(1)
+        sys.exit(1) # Keep the sys.exit(1) here
 
     print("正在查询用户可访问的表 (ALL_TABLES)，这可能需要一些时间...")
     # Query ALL_TABLES to find tables accessible by the user
