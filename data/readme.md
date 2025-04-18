@@ -126,3 +126,15 @@
     *   *(包含非常多的其他财务指标列)*
 
 **注意**: 财务指标 (`raw_csi300_constituent_financials.parquet`) 文件包含了大量列。具体每个财务指标的精确含义建议参考数据源 (Wind数据库) 的字段说明文档或使用 `get_column_comments.py` 脚本查询。
+
+## 6. `merged_daily_data_grouped.parquet`
+
+*   **内容**: 由 `merge_data.py` 脚本生成的合并数据。该脚本将 `raw_csi300_constituent_prices.parquet` (日度行情) 与 `raw_csi300_constituent_financials.parquet` (季度财务) 合并。
+*   **生成脚本**: `merge_data.py`
+*   **合并逻辑**:
+    *   以日度行情数据为主表。
+    *   季度财务数据根据报告期 (`REPORT_PERIOD`) 进行匹配。
+    *   财务数据的生效日期被假定为报告期后一天 (`REPORT_PERIOD` + 1 day) 以避免前瞻性偏差。
+    *   使用 `pd.merge_asof` 按股票代码 (`S_INFO_WINDCODE`) 分组进行合并，并将财务数据向前填充 (`direction='backward'`) 到对应的交易日。
+*   **数据结构**: 每行代表一只股票在一个交易日的行情数据，并附带了该交易日可用的最新财务指标（基于上述逻辑）。
+*   **列说明**: 包含了行情数据和财务数据的所有列。同名列会带有 `_x` (来自行情) 和 `_y` (来自财务) 的后缀。具体列名可以通过加载文件查看。
